@@ -22,11 +22,11 @@ charger_id = '04'
 inverter_id = '04'
 
 command_string_1 = f"{charger_id} 03 27 11 00 0A"
-command_string_2 = f"{charger_id} 03 27 75 00 0C"
+command_string_2 = f"{charger_id} 03 27 75 00 18"
 command_string_3 = f"{charger_id} 03 3B 61 00 15"
 command_string_4 = f"{inverter_id} 03 4E 21 00 10"
-command_string_5 = f"{inverter_id} 03 4E 85 00 2B"
-command_string_6 = f"{inverter_id} 03 62 71 00 4A"
+command_string_5 = f"{inverter_id} 03 4E 85 00 2C"
+command_string_6 = f"{inverter_id} 03 62 71 00 4F"
 
 try:
 
@@ -49,7 +49,7 @@ try:
         responses.append(convert_partArr1_to_json(response_1))
 
     if command_config["command_2_enabled"]:
-        response_2 = get_part_arr(ser, command_bytes_2, 12, 20)
+        response_2 = get_part_arr(ser, command_bytes_2, 24, 20)
         time.sleep(0.03)
         responses.append(convert_partArr2_to_json(response_2))
 
@@ -64,12 +64,12 @@ try:
         responses.append(convert_partArr4_to_json(response_4))
 
     if command_config["command_5_enabled"]:
-        response_5 = get_part_arr(ser, command_bytes_5, 43, 20)
+        response_5 = get_part_arr(ser, command_bytes_5, 44, 20)
         time.sleep(0.03)
         responses.append(convert_partArr5_to_json(response_5))
 
     if command_config["command_6_enabled"]:
-        response_6 = get_part_arr(ser, command_bytes_6, 74, 40)
+        response_6 = get_part_arr(ser, command_bytes_6, 79, 40)
         responses.append(convert_partArr6_to_json(response_6))
 
     # Close the serial connection when done

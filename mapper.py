@@ -11,6 +11,17 @@ def twos_complement(hex_str, num_bits=16):
         value -= 1 << num_bits
     return value
 
+# Map a hex string to a version, e.g. 1.00.00
+def to_version(hex_str):
+    value = twos_complement(hex_str)
+    if hex_str != "0" and value != 0:
+        major = value // 10000
+        minor = (value // 100) % 100
+        patch = value % 100
+        return f"{major}.{minor:02}.{patch:02}"
+    else:
+        return "1.00.00"
+
 def merge_json(json_list):
     merged_json = {}
     
@@ -32,7 +43,7 @@ def convert_partArr1_to_json(partArr1):
         return None
 
 def convert_partArr2_to_json(partArr2):
-    if partArr2 is not None and len(partArr2) == 12:
+    if partArr2 is not None and len(partArr2) == 24:
         result = {
             "ChargerWorkEnable": twos_complement(partArr2[0]),
             "AbsorbVoltage": "{:.2f}".format(float (twos_complement(partArr2[1]) * 0.1)),
@@ -44,7 +55,13 @@ def convert_partArr2_to_json(partArr2):
             "AbsorbChargerCurrent": "{:.2f}".format(float (twos_complement(partArr2[8]) * 0.1)),
             "BatteryType": twos_complement(partArr2[9]),
             "BatteryAh": twos_complement(partArr2[10]),
-            "RemoveTheAccumulatedData": twos_complement(partArr2[11])
+            "RemoveTheAccumulatedData": twos_complement(partArr2[11]),
+            "BatteryEqualizationEnable": twos_complement(partArr2[17]),
+            "BatteryEqualizationVoltage": "{:.2f}".format(float (twos_complement(partArr2[18]) * 0.1)),
+            "BatteryEqualizedTime": twos_complement(partArr2[20]),
+            "BatteryEqualizedTimeout": twos_complement(partArr2[21]),
+            "EqualizationInterval": twos_complement(partArr2[22]),
+            "EqualizationActivedImmediately": twos_complement(partArr2[23])
         }
 
         return json.dumps(result, indent=4)
@@ -97,25 +114,8 @@ def convert_partArr4_to_json(partArr4):
             "InverterSerialNumber": partArr4[1] + partArr4[2]
         }
 
-        int16_6 = twos_complement(partArr4[3])
-
-        # Map int16_6 to InverterHardwareVersion
-        if partArr4[3] != "0" and int16_6 != 0:
-            str2 = f"{int16_6 // 10000}.{(int16_6 // 100) % 100}.{int16_6 % 100}"
-        else:
-            str2 = "1.00.00"
-
-        result["InverterHardwareVersion"] = str2
-
-        int16_7 = twos_complement(partArr4[4])
-
-        # Map int16_7 to InverterSoftwareVersion
-        if partArr4[4] != "0" and int16_7 != 0:
-            str3 = f"{int16_7 // 10000}.{(int16_7 // 100) % 100}.{int16_7 % 100}"
-        else:
-            str3 = "1.00.00"
-
-        result["InverterSoftwareVersion"] = str3
+        result["InverterHardwareVersion"] = to_version(partArr4[3])
+        result["InverterSoftwareVersion"] = to_version(partArr4[4])
 
         # Add the remaining fields
         result["InverterBatteryVoltageC"] = partArr4[8]
@@ -132,13 +132,13 @@ def convert_partArr4_to_json(partArr4):
         return None
 
 def convert_partArr6_to_json(partArr6):
-    if partArr6 is not None and len(partArr6) == 74:
+    if partArr6 is not None and len(partArr6) == 79:
         result = {
             "WorkState":  (twos_complement(partArr6[0])),
             "AcVoltageGrade": twos_complement(partArr6[1]),
             "RatedPower": twos_complement(partArr6[2]),
             "InverterBatteryVoltage": "{:.2f}".format(float (twos_complement(partArr6[4]) * 0.1)),
-            "InverterVoltage": float (twos_complement(partArr6[5]) * 0.1),
+            "InverterVoltage": "{:.2f}".format(float (twos_complement(partArr6[5]) * 0.1)),
             "GridVoltage": "{:.2f}".format(float (twos_complement(partArr6[6]) * 0.1)),
             "BusVoltage": "{:.2f}".format(float (twos_complement(partArr6[7]) * 0.1)),
             "ControlCurrent": "{:.2f}".format(float (twos_complement(partArr6[8]) * 0.1)),
@@ -155,7 +155,7 @@ def convert_partArr6_to_json(partArr6):
             "Qinverter": twos_complement(partArr6[20]),
             "Qgrid": twos_complement(partArr6[21]),
             "Qload": twos_complement(partArr6[22]),
-            "InverterFrequency": float (twos_complement(partArr6[24]) * 0.01),
+            "InverterFrequency": "{:.2f}".format(float (twos_complement(partArr6[24]) * 0.01)),
             "GridFrequency": "{:.2f}".format(float (twos_complement(partArr6[25]) * 0.01)),
             "InverterMaxNumber": partArr6[28],
             "CombineType": partArr6[29],
@@ -179,8 +179,16 @@ def convert_partArr6_to_json(partArr6):
             "AccumulatedGrid_chargerPower": "{:.2f}".format(float (twos_complement(partArr6[58]) * 1000 + twos_complement(partArr6[59]) * 0.1)),
             #"InverterErrorMessage": Rs485ComServer.Operator.AnalyBitMessage(partArr6[60], Rs485Parse.InverterError1) + Rs485ComServer.Operator.AnalyBitMessage(partArr6[61], Rs485Parse.InverterError2),
             #"InverterWarningMessage": Rs485ComServer.Operator.AnalyBitMessage(partArr6[64], Rs485Parse.InverterWarning),
+            "SerialNumber": (partArr6[68] + partArr6[69]),
+            #"SerialNumber": (twos_complement(partArr6[68]) * 65536 + twos_complement(partArr6[69])),
+            "HardwareVersion": to_version(partArr6[70]),
+            "SoftwareVersion": to_version(partArr6[71]),
             "BattPower": twos_complement(partArr6[72]),
-            "BattCurrent": twos_complement(partArr6[73])
+            "BattCurrent": twos_complement(partArr6[73]),
+            "BattVoltageGrade": twos_complement(partArr6[74]),
+            "RatedPowerW": twos_complement(partArr6[76]),
+            "CommunicationProtocolEdition": to_version(partArr6[77]),
+            "ArrowFlag": twos_complement(partArr6[78])
         }
 
         return json.dumps(result, indent=4)
@@ -188,7 +196,7 @@ def convert_partArr6_to_json(partArr6):
         return None
 
 def convert_partArr5_to_json(partArr5):
-    if partArr5 is not None and len(partArr5) == 43:
+    if partArr5 is not None and len(partArr5) == 44:
         result = {
             "InverterOffgridWorkEnable": twos_complement(partArr5[0]),
             "InverterOutputVoltageSet": float (twos_complement(partArr5[1]) * 0.1),
@@ -198,7 +206,7 @@ def convert_partArr5_to_json(partArr5):
             "EnergyUseMode": twos_complement(partArr5[8]),
             "GridProtectStandard": twos_complement(partArr5[10]),
             "SolarUseAim": twos_complement(partArr5[11]),
-            "InverterMaxDischargerCurrent": float (twos_complement(partArr5[12]) * 0.1),
+            "InverterMaxDischargerCurrent": "{:.2f}".format(float (twos_complement(partArr5[12]) * 0.1)),
             "NormalVoltagePoint": "{:.2f}".format(float (twos_complement(partArr5[17]) * 0.1)),
             "StartSellVoltagePoint": "{:.2f}".format(float (twos_complement(partArr5[18]) * 0.1)),
             "GridMaxChargerCurrentSet": "{:.2f}".format(float (twos_complement(partArr5[24]) * 0.1)),
@@ -206,7 +214,8 @@ def convert_partArr5_to_json(partArr5):
             "InverterBatteryHighVoltage": "{:.2f}".format(float (twos_complement(partArr5[27]) * 0.1)),
             "MaxCombineChargerCurrent": "{:.2f}".format(float (twos_complement(partArr5[31]) * 0.1)),
             "SystemSetting": partArr5[41],
-            "ChargerSourcePriority": twos_complement(partArr5[42])
+            "ChargerSourcePriority": twos_complement(partArr5[42]),
+            "SolarPowerBalance": twos_complement(partArr5[43])
         }
         return json.dumps(result, indent=4)
     else:
